@@ -122,4 +122,7 @@ dmypy.json
 ### Python Patch ###
 .venv/
 
+### Emacs files ###
+*~
+
 # End of https://www.gitignore.io/api/python
