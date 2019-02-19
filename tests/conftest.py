@@ -13,7 +13,6 @@ class FixedExtractor(Extractor):
 
     def read(self):
         for x in range(10):
-            print("Generado %s" % x)
             yield {"a": x}
 
 
@@ -31,7 +30,6 @@ class FixedWriter(Writer):
 class FixedTransformer(Transformer):
 
     def transform(self, data):
-        print("Procesando %s" % data)
         return data
 
 
