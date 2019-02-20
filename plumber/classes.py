@@ -1,22 +1,24 @@
 import abc
 import functools
-import contextlib
-from typing import Optional, Generator, Iterable, Any, List, Callable
+import typing
 from types import TracebackType
+from operator import or_
+import copy
 
 # Fix for Python lower than 3.6
-from typing import Type, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    BaseExceptionType = Type[BaseException]
+if typing.TYPE_CHECKING:
+    BaseExceptionType = typing.Type[BaseException]
 else:
     BaseExceptionType = bool  # don't care, as long is it doesn't error
 
 
-def compose(*callables: List[Callable[[Any], Any]]) -> Callable:
-    return functools.reduce(
-        lambda f, g: lambda x: f(g(x)), callables
-    )
+T = typing.TypeVar("T")
+R = typing.TypeVar("R")
+
+
+def transformify(*callables: typing.List["Transformer"]) -> "Transformer":
+    return functools.reduce(or_, callables)
 
 
 class Cleanable(abc.ABC):
@@ -34,33 +36,33 @@ class Cleanable(abc.ABC):
 
     def __exit__(
         self,
-        exc_type: Optional[BaseExceptionType],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: typing.Optional[BaseExceptionType],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[TracebackType],
     ) -> bool:
         self.cleanup()
 
 
-class Extractor(Cleanable):
+class Extractor(Cleanable, typing.Generic[T]):
     @abc.abstractmethod
-    def read(self) -> Generator:
+    def read(self) -> typing.Generator:
         yield None
 
-    def __iter__(self):
+    def __iter__(self) -> typing.Iterable[T]:
         for x in self.read():
             yield x
 
-    def __call__(self):
+    def __call__(self) -> "Extractor[T]":
         return self
 
     @classmethod
-    def from_iterable(cls, it: Iterable) -> "Extractor":
+    def from_iterable(cls, it: typing.Iterable[T]) -> "Extractor[T]":
         pass
 
 
-class Writer(Cleanable):
+class Writer(Cleanable, typing.Generic[T]):
     @abc.abstractmethod
-    def write(self, data: Any) -> None:
+    def write(self, data: T) -> None:
         pass
 
     def __call__(self, tr: "Transformer") -> None:
@@ -68,43 +70,55 @@ class Writer(Cleanable):
             self.write(x)
 
 
-class Transformer(Cleanable):
+class Transformer(abc.ABC, typing.Generic[T, R]):
+    def __init__(self):
+        self._transformations = [self.transform]
 
     @abc.abstractmethod
-    def transform(self, data: Any) -> Any:
+    def transform(self, data: T) -> R:
         pass
 
-    def __iter__(self) -> Iterable[Any]:
+    def __iter__(self) -> typing.Iterable[R]:
         with self._extractor as ext:
             for data in ext:
-                yield self.transform(data)
+                print(self._transformations)
+                for trans in self._transformations:
+                    data = trans(data)
+                yield data
 
-    def __call__(self, ext: Extractor) -> Iterable:
+    def __call__(self, ext: Extractor[T]) -> "Transformer[T,R]":
         self._extractor = ext
         return self
 
     @classmethod
-    def from_function(cls, func: Callable[[Any], Any]) -> 'Transformer':
+    def from_function(cls, func: typing.Callable[[T], R]) -> "Transformer":
         class __FnTransformer(cls):
-            def __init__(self, func: Callable[[Any], Any]) -> None:
+            def __init__(self, func: typing.Callable[[T], R]) -> None:
+                super().__init__()
                 self._func = func
 
-            def transform(self, data: Any) -> Any:
+            def transform(self, data: T) -> R:
+                print(data)
                 return self._func(data)
+
         return __FnTransformer(func)
+
+    def __add__(self, other: "Transformer[R]"):
+        result = copy.deepcopy(self)
+        result._transformations.extend(other._transformations)
+        return result
 
 
 class Pipe:
 
-    def __init__(self, e: Extractor, t: List[Transformer], l: Writer):
+    def __init__(self, e: Extractor[T], t: Transformer[T, R], l: Writer[R]) -> None:
         self._extractor = e
-        self._transformers = compose(*t)
-        print(self._transformers)
+        self._transformer = t
         self._writer = l
 
-    def run(self):
+    def run(self) -> None:
         with self._writer as writer:
-            writer(self._transformers(self._extractor()))
+            writer(self._transformer(self._extractor()))
 
 
 class AsyncReader(abc.ABC):
