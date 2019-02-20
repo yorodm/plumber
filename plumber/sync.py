@@ -119,11 +119,3 @@ class Pipe:
     def run(self) -> None:
         with self._writer as writer:
             writer(self._transformer(self._extractor()))
-
-
-class AsyncReader(abc.ABC):
-    pass
-
-
-class AsyncWriter(abc.ABC):
-    pass

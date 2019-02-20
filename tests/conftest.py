@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from plumber.classes import Extractor, Writer, Transformer
+from plumber import Extractor, Writer, Transformer
 from pytest import fixture
 
 
