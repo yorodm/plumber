@@ -97,6 +97,17 @@ class Extractor(Cleanable, typing.Generic[T]):
         return _iterable_extractor(data)
 
 
+@contextmanager
+def writer(fn: typing.Callable[[T], R]):
+    def wrapper(trans: typing.Callable[[T], R]):
+        for x in trans:
+            fn(x)
+    try:
+        yield wrapper
+    finally:
+        pass
+
+
 class Writer(Cleanable, typing.Generic[T]):
     @abc.abstractmethod
     def write(self, data: T) -> None:
@@ -118,7 +129,6 @@ class Transformer(abc.ABC, typing.Generic[T, R]):
     def __iter__(self) -> typing.Iterable[R]:
         with self._extractor as ext:
             for data in ext:
-                print(self._transformations)
                 for trans in self._transformations:
                     data = trans(data)
                 yield data

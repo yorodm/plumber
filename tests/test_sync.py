@@ -52,3 +52,14 @@ def test_chaining(extractor, transformer, writer):
     pipe = plumber.pipe.Pipe(extractor, transformer + dupe + transformer, writer)
     pipe.run()
     assert writer._data[0] == ({"a": 0}, {"a": 0})
+
+
+def test_fn_writer(extractor, transformer):
+    data = list()
+    @plumber.pipe.writer
+    def write(e):
+        data.append(e)
+    pipe = plumber.pipe.Pipe(extractor, transformer, write)
+    pipe.run()
+    print(data)
+    assert data[0] == {"a": 1}
