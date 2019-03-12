@@ -62,4 +62,4 @@ def test_fn_writer(extractor, transformer):
     pipe = plumber.pipe.Pipe(extractor, transformer, write)
     pipe.run()
     print(data)
-    assert data[0] == {"a": 1}
+    assert data[0] == {"a": 0}
