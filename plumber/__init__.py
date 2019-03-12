@@ -1,1 +1,1 @@
-from plumber.sync import *
+from . import pipe

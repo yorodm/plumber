@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from plumber import Extractor, Writer, Transformer
+from plumber.pipe import Extractor, Writer, Transformer
 from pytest import fixture
 
 
