@@ -14,3 +14,7 @@ class CsvExtractor(Extractor):
             parser = csv.reader(data, **self._csvargs)
             for line in parser:
                 yield line
+
+
+def csv_extractor(filename, **kwargs):
+    return CsvExtractor(filename, **kwargs)
