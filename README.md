@@ -4,7 +4,7 @@
 
 Plumber is a simple Python ETL framework for Python3
 
-**TL;DR:** Here's some code samples
+**TL;DR:** A code sample
 
 ```python
 from plumber import pipe # API síncrona.
