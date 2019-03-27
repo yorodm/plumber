@@ -23,11 +23,9 @@ class Cleanable(abc.ABC):
 
     _exited = False
 
-    @abc.abstractmethod
     def setup(self) -> None:
         pass
 
-    @abc.abstractmethod
     def cleanup(self) -> None:
         pass
 
@@ -144,7 +142,8 @@ class Transformer(abc.ABC, typing.Generic[T, R]):
 
 
 class Pipe:
-    def __init__(self, e: Extractor[T], t: Transformer[T, R], l: Writer[R]) -> None:
+
+    def __init__(self, e: Extractor[T], t: Transformer[T, R], l: Writer[R]) -> None: # noqa
         self._extractor = e
         self._transformer = t
         self._writer = l
@@ -164,21 +163,3 @@ class Pipe:
     def run(self) -> None:
         with self._writer as writer:
             writer(self._transformer(self._extractor))
-
-
-class _SafetyPipe(Pipe):
-
-    def __init__(left: Pipe, right: Pipe):
-        pass
-
-
-class _JointPipe(Pipe):
-
-    def __init__(left: Pipe, right: Pipe) -> None:
-        pass
-
-
-class _MultiPipe(Pipe):
-
-    def __init__(left: Pipe, right: Pipe) -> None:
-        pass
